@@ -47,10 +47,12 @@ yarn build
 Интерфейс, описывающий состояние приложения:
 ```
 export interface IAppState {
-	gallery: IProductItem[] - каталог товаров (массив объектов IProductItem);
-	basket: string[] - корзина (массив строк, содержащих идентификаторы товаров, добавленных в корзину);
+	catalog: IProductItem[] - каталог товаров (массив объектов IProductItem);
+	basket: IProductItem[] - корзина (массив объектов IProductItem, добавленных в корзину);
 	preview: string | null - идентификатор товара для предпросмотра (значение null, если ничего не выбрано для предпросмотра);
 	order: IOrder | null - информация о заказе (значение null, если заказ не оформлен);
+	delivery: IOrderForm | null - информация о способе оплаты и адресе доставки;
+	contacts: IContactsForm | null - информация о номере телефона и почте;
 }
 ```
 
@@ -63,18 +65,15 @@ export interface IProductItem {
 	title: string - название товара;
 	category: string - категория товара;
 	price: number | null - цена товара (если бесценный товар, то значение null);
+	count?: number - номер товара для отображения в корзине;
+	button?: string - кнопка карточки;
 }
-```
-
-Тип, описывающий способ оплаты:
-```
-export type PaymentMethods = 'card' | 'cash';
 ```
 
 Интерфейс, описывающий форму заказа (способ оплаты и адрес доставки):
 ```
 export interface IOrderForm {
-	payment: PaymentMethods - способ оплаты;
+	payment: string - способ оплаты;
 	address: string - адрес доставки;
 }
 ```
@@ -97,7 +96,7 @@ export interface IOrder extends IOrderForm, IContactsForm {
 
 Интерфейс, описывающий успешный заказ:
 ```
-export interface IOrderResult {
+export interface ISuccess {
 	id: string - идентификатор заказа;
 	total: number - общая стоимость заказа.
 }
@@ -159,6 +158,8 @@ constructor(baseUrl: string, options: RequestInit = {}) - принимает URL
 - toggleClass(element: HTMLElement, className: string, force: boolean) - переключает класс элемента (отображение модальных окон);
 - protected setText(element: HTMLElement, value: unknown) - устанавливает текстовое содержимое;
 - setDisabled(element: HTMLElement, state: boolean) - устанавливает статус блокировки (кнопки при валидации);
+- protected setHidden(element: HTMLElement) - скрывает элемент со страницы;
+- protected setVisible(element: HTMLElement) - показывает элемент на странице;
 - protected setImage(element: HTMLImageElement, src: string, alt: string) - устанавливает изображение с альтернативным текстом;
 - render(data?: Partial<T>): HTMLElement - отображение компонента (принимает данные и возвращает корневой DOM-элемент).
 
@@ -175,23 +176,24 @@ constructor(baseUrl: string, options: RequestInit = {}) - принимает URL
 #### Класс AppState
 Расширяет класс Model. Отвечает за управление состоянием приложения, выполнение операций и хранение данных.
 ##### Свойства:
-- gallery: ProductItem[] - данные о товаре;
-- basket: ProductItem[] = [] - данные о товаре в корзине;
-- loading: boolean;
+- catalog: IProductItem[] - данные о товаре;
+- basket: IProductItem[] = [] - данные о товаре в корзине;
 - order: IOrder = {} - данные о заказе;
 - preview: string | null - идентификационный номер товара;
 - formErrors: FormErrors = {} - ошибки полей формы.
 ##### Конструктор:
 - constructor() - наследуется от класса Model.
 ##### Методы:
+- setCatalog() - устанавливает каталог товаров;
+- addItemToBasket() - добавляет выбранный товар в корзину;
+- deleteItemFromBasket() - удаляет выбранный товар из корзины;
 - getTotal() - считает общую стоимость товаров в корзине;
-- setGallery() - устанавливает каталог товаров;
+- clearBasket() - очищает корзину;
 - setPreview() - устанавливает предпросмотр товара;
-- setOrderField() - устанавливает значение полей в форме оплаты;
-- setContactsField() - устанавливает значение полей в форме ввода контактных данных;
-- validateOrder() - проверяет правильность заполнения данных в форме оплаты;
-- validateContacts() - проверяет правильность заполнения данных в форме ввода контактных данных;
-- addToBasket() - добавляет выбранный товар в корзину.
+- setOrderForm() - устанавливает значение полей в форме оплаты;
+- setContactsForm() - устанавливает значение полей в форме ввода контактных данных;
+- validateOrderForm() - проверяет правильность заполнения данных в форме оплаты;
+- validateContactsForm() - проверяет правильность заполнения данных в форме ввода контактных данных.
 
 ### Классы представления
 Отвечают за отображение данных внутри контейнера (DOM-элемента).
@@ -226,8 +228,11 @@ constructor(baseUrl: string, options: RequestInit = {}) - принимает URL
 
 ###### Класс OrderForm
 Предназначен для работы с формой для указания способа оплаты и ввода адреса доставки товара.
-- constructor(container: HTMLFormElement, events: IEvents);
-- методы класса: set payment(value: string) и set address(value: string) - сеттеры для установки адреса и работы с кнопкой выбора способа оплаты.
+- constructor(container: HTMLFormElement, events: IEvents, actions: ICardActions);
+- методы класса:
+set address(value: string) - сеттер для указания адреса;
+togglePaymentButton - выбирает кнопку - способ оплаты;
+- clearPayment - убирает активную кнопку выбора способа оплаты;
 
 ###### Класс ContactsForm
 Предназначен для работы с формой для указания email и телефона покупателя.
@@ -239,45 +244,33 @@ constructor(baseUrl: string, options: RequestInit = {}) - принимает URL
 ##### Свойства:
 - protected _list: HTMLElement - список товаров в корзине;
 - protected _total: HTMLElement - общая стоимость товаров в корзине;
-- protected _button: HTMLElement - кнопка (Оформить заказ);
+- protected _button: HTMLButtonElement - кнопка (Оформить заказ);
 ##### Конструктор:
 - constructor(container: HTMLElement, protected events: EventEmitter) - принимает контейнер корзины и объект событий;
 ##### Методы:
 - set items(items: HTMLElement[]) - устанавливает список товаров в корзине. Если список пуст, показывает сообщение "Корзина пуста";
-- set selected(items: ProductItem[]) - выбирает товары. Если товары выбраны, кнопка заказа становится активной, иначе - неактивна;
-- set total(total: string) - устанавливает общую стоимость товаров в корзине;
+- set total(total: number) - устанавливает общую стоимость товаров в корзине;
 
 #### Класс Success
 Расширяет класс Component, используется для реализации модального окна успешного заказа.
 ##### Свойства:
 - protected _close: HTMLElement - кнопка закрытия сообщения об успешном заказе;
-- protected _count: HTMLElement - информация о количестве синапсов, списанных при успешном заказе;
+- protected _total: HTMLElement - информация о количестве синапсов, списанных при успешном заказе;
 ##### Конструктор:
-- constructor(container: HTMLElement, actions: ISuccessActions, count: number) - принимает элемент успешной оплаты, количество синапсов, устанавливает обработчик события для кнопки закрытия;
-
-#### Класс Order
-Расширяет класс Form, используется для реализации модального окна заказа.
-##### Свойства:
-- protected _buttons: HTMLButtonElement[];
-##### Конструктор:
--  constructor(container: HTMLFormElement, events: IEvents) - принимает элементы способа оплаты, формы доставки и данных покупателя, объект событий;
-##### Методы:
-- set address(value: string) - адрес покупателя;
-- set email(value: string) - электронная почта покупателя;
-- set phone(value: string) - номер телефона покупателя;
+- constructor(container: HTMLElement, actions: ISuccessActions) - принимает элемент успешной оплаты, устанавливает обработчик события для кнопки закрытия;
 
 #### Класс Page
 Расширяет класс Component, используется для управления содержимым страницы, для отображения списка товаров и корзины.
 ##### Свойства:
 - protected _counter: HTMLElement - счетчик товаров в корзине;
-- protected _gallery: HTMLElement - каталог товаров;
+- protected _catalog: HTMLElement - каталог товаров;
 - protected _wrapper: HTMLElement - обертка страницы;
 - protected _basket: HTMLElement - кнопка корзины товаров;
 ##### Конструктор:
 - constructor(container: HTMLElement, protected events: IEvents) - принимает корневой элемент и объект событий;
 ##### Методы:
 - set counter(value: number) - количество товаров в корзине;
-- set gallery(items: HTMLElement[]) - список товаров;
+- set catalog(items: HTMLElement[]) - список товаров;
 - set locked(value: boolean) - состояние блокировки страницы;
 
 #### Класс Card
@@ -290,27 +283,16 @@ constructor(baseUrl: string, options: RequestInit = {}) - принимает URL
 - protected _description: HTMLElement - описание товара;
 - protected _button: HTMLButtonElement - кнопка карточки;
 ##### Конструктор:
-- constructor(container: HTMLElement, actions?: ICardActions) - принимает контейнер, в который будет рендериться компонент, и дополнительные действия.
+- constructor(blockname: string, container: HTMLElement, actions?: ICardActions) - принимает контейнер, в который будет рендериться компонент, и дополнительные действия.
 ##### Методы:
 - set id(value: string) - устанавливает идентификатор товара;
 - set title(value: string) - устанавливает наименование товара;
 - set image(value: string) - устанавливает изображение товара;
-- set category(value: string) - устанавливает категорию товара;
-- set inBasket(value: boolean) - определяет, находится ли карточка в корзине;
+- set description(value: string) - устанавливает описание карточки;
+- set button(value: string) - устанавливает текст кнопки на предпросмотре;
 - set price(value: string) - устанавливает цену;
-- set description(value: string) - устанавливает описание карточки.
-
-##### Наследники:
-Классы CatalogItem и BasketItem наследуют функционал класса Card и дополняют его новыми свойствами и методами для каталога товаров и корзины соответственно.
-
-###### CatalogItem  
-Класс для управления товарами в каталоге. 
-- constructor(container: HTMLElement, actions: ICardActions) - создает новый экземпляр каталожного товара, используя контейнер HTML, в котором находится информация о товаре, и действия (обработчик нажатия на кнопку);
-- setInBasket(value: boolean) - определяет, добавлен ли товар в корзину. Если товар добавлен в корзину, текст кнопки изменяется на "Перейти в корзину", если не добавлен в корзину - текст кнопки "Добавить в корзину".
-
-###### BasketItem 
-Класс для управления товарами в корзине. 
-- constructor(container: HTMLElement, actions: ICardActions) - создает новый экземпляр товара в корзине, используя контейнер HTML, содержащий информацию о товаре, и обработчик нажатия на кнопку.
+- set index(value: string) - устанавливает номер товара в корзине;
+- set category(value: string) - устанавливает категорию товара.
 
 ## Взаимодействие компонентов
 
@@ -320,14 +302,21 @@ constructor(baseUrl: string, options: RequestInit = {}) - принимает URL
 
 ## Описание событий
 
+- items:changed - формирует карточки товаров;
+- card:select - выбирает карточку для предпросмотра;
+- preview:changed - берет id карточки и формирует модальное окно предпросмотра выбранного товара;
+- item:check - проверяет наличие товара в корзине;
+- item:add - добавляет товар в корзину;
+- item:delete - удаляет товар из корзины;
+- basket:open - открытие корзины (отображается ее содержимое);
+- basket:changed - изменение содержимого корзины (отображается новое содержимое корзины);
+- count:changed - изменяет количество товаров в корзине;
+- order:open - открытие формы заказа с указанием способа оплаты и адреса (отображается форма с пустыми полями);
+- payment:changed - выбирает способ оплаты и записывает его в модель данных;
+- orderForm: changed - валидирует форму заказа с указанием способа оплаты и адреса;
+- order:submit - отправка формы заказа с указанием способа оплаты и адреса (открывается форма ввода контактных данных);
+- contactsForm:changed - валидирует форму заказа с указанием почты и телефона;
+- contacts:submit - отправка формы с контактными данными (очищает корзину и вызывает событие success:open);
+- success:open - сообщение об успешном заказе;
 - modal:open - открытие модальных окон (страница блокируется);
 - modal:close - закрытие модальных окон (страница разблокируется);
-- basket:open - открытие корзины (отображается ее содержимое);
-- order:open - открытие формы заказа с указание формы оплаты и адреса (отображается форма с пустыми полями);
-- contacts:open - открытие формы ввода контактных данных (отображается форма с пустыми полями);
-- basket:update - обновление содержимого корзины (отображается новое содержимое корзины);
-- basket:remove - удаление товара из корзины (выбранный товар удаляется из корзины);
-- basket:clear - очистка корзины (все товары удаляются из корзины);
-- order:submit - отправка формы заказа с указание формы оплаты и адреса (открывается форма ввода контактных данных);
-- contacts:submit - отправка формы с контактными данными (появляется сообщение об успешном оформлении заказа);
-- formErrors:change - изменение ошибок валидации формы (отображается соответствующее сообщение об ошибке).

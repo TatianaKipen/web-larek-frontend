@@ -1,27 +1,28 @@
 //состояние приложения
 export interface IAppState {
-	gallery: IProductItem[];
-	basket: string[];
+	catalog: IProductItem[];
+	basket: IProductItem[];
 	preview: string | null;
 	order: IOrder | null;
+	delivery: IOrderForm | null;
+	contacts: IContactsForm | null;
 }
 
 // карточка товара
 export interface IProductItem {
 	id: string;
-	description: string;
+    description: string;
 	image: string;
 	title: string;
 	category: string;
 	price: number | null;
+	count?: number;
+	button?: string;
 }
-
-//способ оплаты
-export type PaymentMethods = 'card' | 'cash';
 
 // форма оплаты
 export interface IOrderForm {
-	payment: PaymentMethods;
+	payment: string;
 	address: string;
 }
 
@@ -38,7 +39,7 @@ export interface IOrder extends IOrderForm, IContactsForm {
 }
 
 //успешный заказ
-export interface IOrderResult {
+export interface ISuccess {
 	id: string;
 	total: number;
 }
