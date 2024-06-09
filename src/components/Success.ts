@@ -1,6 +1,6 @@
-import { Component } from '../base/Component';
-import { ensureElement } from '../../utils/utils';
-import { ISuccess } from '../../types';
+import { Component } from './base/Component';
+import { ensureElement } from '../utils/utils';
+import { ISuccess } from '../types';
 
 interface ISuccessActions {
     onClick: () => void;
@@ -22,6 +22,6 @@ export class Success extends Component<ISuccess> {
     }
 
     set total(value: string) {
-		this._total.textContent = `Списано ${value} синапсов`;
+        this.setText(this._total, `Списано ${value} синапсов`);
 	}
 }

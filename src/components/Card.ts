@@ -104,7 +104,7 @@ export class Card extends Component<IProductItem> {
 
 	// номер товара в корзине
 	set index(value: string) {
-		this._count.textContent = value;
+		this.setText(this._count, value);
 	}
 	
 	get index(): string {

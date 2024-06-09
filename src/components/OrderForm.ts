@@ -1,14 +1,14 @@
 import { IOrderForm } from '../types';
 import { ICardActions } from './Card';
-import { IEvents } from './base/events';
+import { IEvents } from './base/Eveeeeeeents';
 import { Form } from './common/Form';
 import { ensureElement } from '../utils/utils';
 
-export class orderForm extends Form<IOrderForm> {
+export class OrderForm extends Form<IOrderForm> {
 	protected _card: HTMLButtonElement;
 	protected _cash: HTMLButtonElement;
 
-	constructor( container: HTMLFormElement, events: IEvents, actions: ICardActions) {
+	constructor(container: HTMLFormElement, events: IEvents, actions: ICardActions) {
 		super(container, events);
 		this._card = ensureElement<HTMLButtonElement>(`button[name=card]`, this.container);
 		this._cash = ensureElement<HTMLButtonElement>(`button[name=cash]`, this.container);
@@ -23,14 +23,26 @@ export class orderForm extends Form<IOrderForm> {
 		(this.container.elements.namedItem('address') as HTMLInputElement).value = value;
 	}
 
-	togglePaymentButton(changePayment: HTMLButtonElement): void {
-		this._card.classList.remove('button_alt-active');
-		this._cash.classList.remove('button_alt-active');
-		changePayment.classList.add('button_alt-active');
+	toggleCard(state: boolean = true) {
+		this.toggleClass(this._card, 'button_alt-active', state);
+	}
+
+	toggleCash(state: boolean = true) {
+		this.toggleClass(this._cash, 'button_alt-active', state);
+	}
+
+	togglePaymentButton(target: HTMLElement): void {
+		if(target === this._card) {
+			this.toggleCard();		   
+			this.toggleCash(false);		   
+		} else if(target === this._cash) {		   
+			this.toggleCard(false);		   
+			this.toggleCash();
+		}
 	}
 
 	clearPayment() {
-		this._card.classList.remove('button_alt-active');
-		this._cash.classList.remove('button_alt-active');
+		this.toggleCard(false);
+		this.toggleCash(false);
 	}
 }

@@ -1,18 +1,18 @@
 import './scss/styles.scss';
 
 import { API_URL, CDN_URL } from './utils/constants';
-import { EventEmitter } from './components/base/events';
+import { EventEmitter } from './components/base/Eveeeeeeents';
 import { Modal } from './components/common/Modal';
-import { Basket } from './components/common/Basket';
-import { Success } from './components/common/Success';
+import { Basket } from './components/Basket';
+import { Success } from './components/Success';
 import { ProductAPI } from './components/ProductAPI';
 import { AppState, CatalogChangeEvent } from './components/AppData';
 import { Card } from './components/Card';
 import { Page } from './components/Page';
 import { cloneTemplate, ensureElement } from './utils/utils';
 import { IProductItem, IOrderForm, IContactsForm } from './types';
-import { contactsForm } from './components/ContactsForm';
-import { orderForm } from './components/OrderForm';
+import { ContactsForm } from './components/ContactsForm';
+import { OrderForm } from './components/OrderForm';
 
 const events = new EventEmitter();
 const api = new ProductAPI(CDN_URL, API_URL);
@@ -49,7 +49,7 @@ const modal = new Modal(ensureElement<HTMLTemplateElement>('#modal-container'), 
 // Переиспользуемые части интерфейса
 const basket = new Basket(cloneTemplate(basketTemplate), events);
 
-const orderFormContainer = new orderForm(
+const orderFormContainer = new OrderForm(
 	cloneTemplate(orderFormTemplate),
 	events,
 	{
@@ -59,8 +59,7 @@ const orderFormContainer = new orderForm(
 	}
 );
 
-const contactsFormContainer = new contactsForm(cloneTemplate(contactsFormTemplate), events);
-
+const contactsFormContainer = new ContactsForm(cloneTemplate(contactsFormTemplate), events);
 
 // Бизнес-логика 
 
@@ -71,11 +70,11 @@ events.on<CatalogChangeEvent>('items:changed', () => {
 			onClick: () => events.emit('card:select', item),
 		});
 		return card.render({
-			//...item,
-			title: item.title,
-			image: item.image,
-			category: item.category,
-			price: item.price,
+			...item,
+			//title: item.title,
+			//image: item.image,
+			//category: item.category,
+			//price: item.price,
 		});
 	});
 });
@@ -240,16 +239,12 @@ events.on('contacts:submit', () => {
 			});
 			success.total = result.total.toString();
 			modal.render({ content: success.render({}) });
+			appData.resetFormData();
 			appData.clearBasket();
 		})
 		.catch((err) => {
 			console.error(err)
 		});
-
-	appData.order.payment = '';
-	appData.order.address = '';
-	appData.order.email = '';
-	appData.order.phone = '';
 });
 
 // Блокируем прокрутку страницы, если открыто модальное окно

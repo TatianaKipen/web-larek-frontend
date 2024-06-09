@@ -101,4 +101,12 @@ export class AppState extends Model<IAppState> {
 		this.events.emit('contactsForm:changed', this.formErrors);
 		return Object.keys(errors).length === 0;
 	}
+
+	// очистить заказ после успешного ответа сервера
+	resetFormData() {
+		this.order.payment = '';
+		this.order.address = '';
+		this.order.email = '';
+		this.order.phone = '';
+	}
 }
