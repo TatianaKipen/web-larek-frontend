@@ -207,6 +207,8 @@ constructor(baseUrl: string, options: RequestInit = {}) - принимает URL
 - constructor(container: HTMLElement, events: IEvents) - принимает контейнер модального окна и объект событий.
 ##### Методы:
 - set content(value: HTMLElement) - устанавливает контент для модального окна;
+- toggleModal(state: boolean = true) - метод для переключения модального окна;
+- handleEscape = (evt: KeyboardEvent) - обработчик в виде стрелочного метода;
 - open() - открыть модальное окно;
 - close() - закрыть модальное окно;
 - render(data: IModalData): HTMLElement - рендерит модальное окно с переданным контентом;
@@ -231,8 +233,8 @@ constructor(baseUrl: string, options: RequestInit = {}) - принимает URL
 - constructor(container: HTMLFormElement, events: IEvents, actions: ICardActions);
 - методы класса:
 set address(value: string) - сеттер для указания адреса;
-togglePaymentButton - выбирает кнопку - способ оплаты;
-- clearPayment - убирает активную кнопку выбора способа оплаты;
+toggleCard, toggleCash, togglePaymentButton - методы для выбора кнопки способа оплаты;
+clearPayment - убирает активную кнопку выбора способа оплаты;
 
 ###### Класс ContactsForm
 Предназначен для работы с формой для указания email и телефона покупателя.
