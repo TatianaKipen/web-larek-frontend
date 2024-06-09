@@ -1,6 +1,6 @@
 import { IOrderForm } from '../types';
 import { ICardActions } from './Card';
-import { IEvents } from './base/Eveeeeeeents';
+import { IEvents } from './base/Events';
 import { Form } from './common/Form';
 import { ensureElement } from '../utils/utils';
 

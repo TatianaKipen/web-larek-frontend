@@ -1,4 +1,4 @@
-import { Api, ApiListResponse } from './base/Appppppi';
+import { Api, ApiListResponse } from './base/Api';
 import { IOrder, ISuccess, IProductItem } from '../types';
 
 export interface IProductAPI {

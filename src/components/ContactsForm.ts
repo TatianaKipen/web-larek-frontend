@@ -1,6 +1,6 @@
 import { IContactsForm } from '../types';
 import { Form } from './common/Form';
-import { IEvents } from './base/Eveeeeeeents';
+import { IEvents } from './base/Events';
 
 export class ContactsForm extends Form<IContactsForm> {
 	constructor(container: HTMLFormElement, events: IEvents) {

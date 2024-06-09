@@ -1,7 +1,7 @@
 import './scss/styles.scss';
 
 import { API_URL, CDN_URL } from './utils/constants';
-import { EventEmitter } from './components/base/Eveeeeeeents';
+import { EventEmitter } from './components/base/Events';
 import { Modal } from './components/common/Modal';
 import { Basket } from './components/Basket';
 import { Success } from './components/Success';
